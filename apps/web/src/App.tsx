@@ -168,7 +168,6 @@ function App() {
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogSourceFilter, setCatalogSourceFilter] = useState("all");
   const [catalogPinnedPlaceholderKey, setCatalogPinnedPlaceholderKey] = useState("");
-  const [catalogCopiedPlaceholderKey, setCatalogCopiedPlaceholderKey] = useState("");
   const [uploadForm, setUploadForm] = useState({
     name: "",
     companyName: ""
@@ -667,18 +666,6 @@ function App() {
 
   function resetPlaceholders() {
     setPlaceholderConfig(ensurePlaceholderConfig());
-  }
-
-  async function copyPlaceholderTag(key: string) {
-    try {
-      await navigator.clipboard.writeText(`{{${key}}}`);
-      setCatalogCopiedPlaceholderKey(key);
-      window.setTimeout(() => {
-        setCatalogCopiedPlaceholderKey((current) => (current === key ? "" : current));
-      }, 1800);
-    } catch {
-      setErrorMessage("Não foi possível copiar a tag do placeholder.");
-    }
   }
 
   async function toggleFullscreen() {
@@ -1745,13 +1732,6 @@ function App() {
                           <p className="eyebrow">Preview ativo</p>
                           <h2>{catalogPinnedPlaceholder.label}</h2>
                         </div>
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={() => void copyPlaceholderTag(catalogPinnedPlaceholder.key)}
-                        >
-                          {catalogCopiedPlaceholderKey === catalogPinnedPlaceholder.key ? "Tag copiada" : "Copiar tag"}
-                        </button>
                       </div>
 
                       <div className="placeholder-chip-row">
