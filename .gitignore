@@ -31,7 +31,6 @@ apps/web/vite.config.d.ts
 *.pptx
 *.xlsx
 *.zip
-!apps/web/public/MODELO_RELATORIO_PSICOSSOCIAIS_V2.docx
 
 # Relatórios/exports gerados automaticamente
 analise-*.html

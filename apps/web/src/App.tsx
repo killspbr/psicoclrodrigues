@@ -110,16 +110,6 @@ const reportSectionLinks = [
 type ScreenId = (typeof appScreens)[number]["id"];
 
 declare global {
-  interface Window {
-    PizZip?: new (input: ArrayBuffer) => any;
-    docxtemplater?: new (...args: any[]) => any;
-    ImageModule?: new (options: {
-      centered?: boolean;
-      getImage: (tagValue: string) => ArrayBuffer | null;
-      getSize: (imgBuffer: unknown, tagValue: string, tagName: string) => [number, number];
-    }) => any;
-  }
-
   interface Document {
     webkitFullscreenElement?: Element | null;
     webkitExitFullscreen?: () => Promise<void>;
@@ -156,7 +146,6 @@ function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savingMeasures, setSavingMeasures] = useState(false);
-  const [exportingDocx, setExportingDocx] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<string>(ALL_UNITS_VALUE);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -641,113 +630,6 @@ function App() {
       setErrorMessage(error instanceof Error ? error.message : "Erro inesperado.");
     } finally {
       setSavingMeasures(false);
-    }
-  }
-
-  async function handleExportDocx() {
-    if (!selectedAssessment || !activeAnalytics) return;
-
-    if (!window.PizZip || !window.docxtemplater || !window.ImageModule) {
-      setErrorMessage("Bibliotecas de exportação DOCX não foram carregadas.");
-      return;
-    }
-
-    setExportingDocx(true);
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    try {
-      const response = await fetch("/MODELO_RELATORIO_PSICOSSOCIAIS_V2.docx");
-      if (!response.ok) {
-        throw new Error("Modelo DOCX não encontrado na aplicação publicada.");
-      }
-
-      const basePayload = buildDocxTemplatePayload({
-        assessmentName: selectedAssessment.name,
-        companyName: selectedAssessment.companyName,
-        unitName: activeUnitLabel,
-        analytics: activeAnalytics,
-        controlMeasures: selectedAssessment.controlMeasures
-      });
-      const visualPayload = await captureReportVisualPayload();
-      const payload = filterDocxPayload(
-        {
-          ...basePayload,
-          ...visualPayload
-        },
-        placeholderConfig
-      );
-
-      const arrayBuffer = await response.arrayBuffer();
-      const zip = new window.PizZip(arrayBuffer);
-      const imageModule = new window.ImageModule({
-        centered: false,
-        getImage(tagValue: string) {
-          if (!tagValue || tagValue === DOCX_TRANSPARENT_PIXEL) return null;
-
-          try {
-            const base64Data = tagValue.split(",")[1] ?? "";
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Uint8Array(byteCharacters.length);
-
-            for (let index = 0; index < byteCharacters.length; index += 1) {
-              byteNumbers[index] = byteCharacters.charCodeAt(index);
-            }
-
-            return byteNumbers.buffer;
-          } catch {
-            return null;
-          }
-        },
-        getSize(_imgBuffer: unknown, _tagValue: string, tagName: string) {
-          const key = String(tagName ?? "");
-
-          if (key.includes("categoria")) return [480, 235];
-          if (key.includes("depart")) return [500, 240];
-          if (key.includes("heatmap") || key.includes("treemap")) return [500, 280];
-          return [480, 250];
-        }
-      });
-
-      const Docxtemplater = window.docxtemplater;
-      const doc = new Docxtemplater(zip, {
-        modules: [imageModule],
-        delimiters: { start: "{{", end: "}}" },
-        paragraphLoop: true,
-        linebreaks: true,
-        nullGetter: () => ""
-      });
-
-      doc.setData(payload);
-      doc.render();
-
-      const blob = doc.getZip().generate({
-        type: "blob",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      }) as Blob;
-
-      const normalizedName = `${selectedAssessment.companyName || selectedAssessment.name}_${activeUnitLabel}`
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .toLowerCase();
-
-      const fileName = `Relatorio_Psicossocial_${normalizedName || "avaliacao"}.docx`;
-      const downloadUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = downloadUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(downloadUrl);
-
-      setSuccessMessage("Relatório DOCX exportado com sucesso.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Falha ao exportar o DOCX.");
-    } finally {
-      setExportingDocx(false);
     }
   }
 
@@ -1547,12 +1429,9 @@ function App() {
                     </div>
                   </div>
                   <div className="toolbar-actions">
-                    <button type="button" onClick={() => void handleExportDocx()} disabled={exportingDocx}>
-                      {exportingDocx ? "Exportando DOCX..." : "Exportar DOCX"}
-                    </button>
-                    <button type="button" onClick={() => window.print()}>
-                      Imprimir / PDF
-                    </button>
+                    <span className="placeholder-chip subtle">
+                      Geração de DOCX e PDF inativa nesta versão online
+                    </span>
                   </div>
                 </div>
 
@@ -1759,7 +1638,7 @@ function App() {
                   <div className="panel-header">
                     <div>
                       <p className="eyebrow">Catálogo de Placeholders</p>
-                      <h2>Seleção visual para exportação</h2>
+                      <h2>Seleção visual para pré-visualização</h2>
                     </div>
                     <div className="toolbar-actions">
                       <span className="placeholder-chip subtle">{`${catalogPlaceholders.length} itens no recorte`}</span>
@@ -1884,7 +1763,7 @@ function App() {
                           </span>
                         ) : null}
                         <span className={`placeholder-chip ${catalogPinnedPlaceholderIsActive ? "ok" : "warn"}`}>
-                          {catalogPinnedPlaceholderIsActive ? "Incluído na exportação" : "Excluído da exportação"}
+                          {catalogPinnedPlaceholderIsActive ? "Incluído na pré-visualização" : "Oculto na pré-visualização"}
                         </span>
                       </div>
 
@@ -1900,7 +1779,7 @@ function App() {
                             checked={catalogPinnedPlaceholderIsActive}
                             onChange={() => togglePlaceholder(catalogPinnedPlaceholder.key)}
                           />
-                          <span>Incluir este placeholder na exportação DOCX</span>
+                          <span>Incluir este placeholder na pré-visualização do relatório</span>
                         </label>
                       </div>
 
