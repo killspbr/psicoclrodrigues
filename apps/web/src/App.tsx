@@ -45,7 +45,14 @@ interface AssessmentDetail extends AssessmentListItem {
   controlMeasures: ControlMeasures | null;
 }
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim() ?? "";
+const runtimeHostname =
+  typeof window !== "undefined" ? window.location.hostname.toLowerCase() : "";
+const isLocalRuntime =
+  runtimeHostname === "localhost" || runtimeHostname === "127.0.0.1";
+const apiUrl = configuredApiUrl || (isLocalRuntime ? "http://localhost:8080" : "");
+const missingApiConfigurationMessage =
+  "A API não está configurada para esta publicação. Defina VITE_API_URL no ambiente publicado.";
 const ALL_UNITS_VALUE = "__all_units__";
 type MeasureKey = (typeof CONTROL_MEASURE_KEYS)[number];
 type YesNoValue = "Sim" | "Nao";
@@ -179,6 +186,14 @@ function App() {
     setLoading(true);
     setErrorMessage("");
 
+    if (!apiUrl) {
+      setAssessments([]);
+      setSelectedAssessment(null);
+      setErrorMessage(missingApiConfigurationMessage);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${apiUrl}/api/assessments`);
       if (!response.ok) throw new Error("Falha ao carregar avaliações.");
@@ -197,6 +212,12 @@ function App() {
 
   async function fetchAssessment(id: string) {
     if (!id) return;
+
+    if (!apiUrl) {
+      setSelectedAssessment(null);
+      setErrorMessage(missingApiConfigurationMessage);
+      return;
+    }
 
     setLoading(true);
     setErrorMessage("");
@@ -552,6 +573,11 @@ function App() {
       return;
     }
 
+    if (!apiUrl) {
+      setErrorMessage(missingApiConfigurationMessage);
+      return;
+    }
+
     setLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
@@ -591,6 +617,11 @@ function App() {
 
   async function handleSaveMeasures() {
     if (!selectedAssessment) return;
+
+    if (!apiUrl) {
+      setErrorMessage(missingApiConfigurationMessage);
+      return;
+    }
 
     setSavingMeasures(true);
     setErrorMessage("");
