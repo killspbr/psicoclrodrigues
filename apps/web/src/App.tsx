@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActionPlanGroup,
   analyzeRows,
   buildReportModel,
   buildDocxTemplatePayload,
@@ -344,9 +345,24 @@ function App() {
     [reportModel]
   );
 
+  const actionPlanGroups = useMemo(
+    () => reportModel?.actionPlanGroups ?? [],
+    [reportModel]
+  );
+
+  const prioritizedActionRows = useMemo(
+    () =>
+      actionPlanGroups.flatMap((group) =>
+        group.rows.filter((row) => row.tipo_linha === "acao")
+      ),
+    [actionPlanGroups]
+  );
+
+  const prioritizedActionCount = reportModel?.actionPlanSummary.prioritizedActions ?? prioritizedActionRows.length;
+
   const executiveActionPlanRows = useMemo(
-    () => actionPlanRows.slice(0, 4),
-    [actionPlanRows]
+    () => prioritizedActionRows.slice(0, 4),
+    [prioritizedActionRows]
   );
 
   useEffect(() => {
@@ -1052,7 +1068,7 @@ function App() {
                     </div>
                     <div className="executive-metric-card">
                       <span>Planos sugeridos</span>
-                      <strong>{activeAnalytics.recommendations.length}</strong>
+                      <strong>{prioritizedActionCount}</strong>
                     </div>
                   </div>
 
@@ -1283,11 +1299,11 @@ function App() {
               <article className="panel">
                 <div className="panel-header">
                   <h2>Plano sugerido</h2>
-                  <span>{actionPlanRows.length} ações</span>
+                  <span>{prioritizedActionCount} ações prioritárias</span>
                 </div>
-                <div className="recommendation-list">
-                  {actionPlanRows.map((row, index) => (
-                    <ActionPlanCard key={`analysis-plan-${row.pergunta}-${index}`} row={row} />
+                <div className="action-plan-groups">
+                  {actionPlanGroups.map((group) => (
+                    <ActionPlanGroupCard key={`analysis-plan-${group.category}`} group={group} />
                   ))}
                 </div>
               </article>
@@ -1608,9 +1624,9 @@ function App() {
 
                   <section className="report-section report-page-break-before" id="report-section-actions">
                     <h2>Plano de Ação Sugerido</h2>
-                    <div className="recommendation-list report-recommendations">
-                      {actionPlanRows.map((row, index) => (
-                        <ActionPlanCard key={`report-plan-${row.pergunta}-${index}`} row={row} />
+                    <div className="action-plan-groups report-action-plan-groups">
+                      {actionPlanGroups.map((group) => (
+                        <ActionPlanGroupCard key={`report-plan-${group.category}`} group={group} />
                       ))}
                     </div>
                   </section>
@@ -1619,6 +1635,7 @@ function App() {
                     <h2>Plano de Ação Estruturado</h2>
                     <ReportTable
                       columns={[
+                        { key: "categoria", label: "Categoria" },
                         { key: "pergunta", label: "Pergunta" },
                         { key: "setores_contexto", label: "Setores" },
                         { key: "acao", label: "Ação" },
@@ -1977,6 +1994,32 @@ function PlaceholderHoverPreview({
   }
 
   return <div className="placeholder-hover-copy">{String(value ?? "Sem conteúdo gerado.")}</div>;
+}
+
+function ActionPlanGroupCard({ group }: { group: ActionPlanGroup }) {
+  return (
+    <article className={`action-plan-group${group.hasPrioritizedActions ? "" : " is-continuity"}`}>
+      <div className="action-plan-group-header">
+        <div>
+          <strong>{group.category}</strong>
+          <small>{group.summary}</small>
+        </div>
+        <span className={`pill ${group.hasPrioritizedActions ? priorityTone.Moderada : priorityTone.Monitoramento}`}>
+          {group.hasPrioritizedActions ? `${group.rows.length} ação(ões)` : "Continuidade"}
+        </span>
+      </div>
+
+      {group.hasPrioritizedActions ? (
+        <div className="action-plan-group-cards">
+          {group.rows.map((row, index) => (
+            <ActionPlanCard key={`${group.category}-${row.pergunta}-${index}`} row={row} />
+          ))}
+        </div>
+      ) : (
+        <p className="action-plan-group-fallback">{group.summary}</p>
+      )}
+    </article>
+  );
 }
 
 function ActionPlanCard({ row }: { row: Record<string, string> }) {

@@ -137,6 +137,19 @@ export interface Recommendation {
   rationale: string;
 }
 
+export interface ActionPlanGroup {
+  category: string;
+  hasPrioritizedActions: boolean;
+  summary: string;
+  rows: DocxTableRow[];
+}
+
+export interface ActionPlanSummary {
+  prioritizedActions: number;
+  continuityCategories: number;
+  totalCategories: number;
+}
+
 export interface AssessmentAnalytics {
   generatedAt: string;
   summary: SummaryMetrics;
@@ -164,6 +177,8 @@ export interface ReportModel {
   controlMeasuresTable: DocxTableRow[];
   departmentSummaryTable: DocxTableRow[];
   topQuestionsTable: DocxTableRow[];
+  actionPlanGroups: ActionPlanGroup[];
+  actionPlanSummary: ActionPlanSummary;
   actionPlanTable: DocxTableRow[];
   sections: ReportSection[];
 }
@@ -209,6 +224,11 @@ const controlMeasureLabels: Record<string, string> = {
   treinamento_lideranca: "Treinamento de liderancas",
   pesquisa_clima: "Pesquisa de clima"
 };
+
+const LOW_RISK_CATEGORY_ACTION_TEXT =
+  "Conforme resultado do Mapeamento dos Riscos Psicossociais relacionados ao trabalho, " +
+  "nao foram identificadas demandas de implementacoes de novos controles para a categoria, " +
+  "sendo sugerida a continuidade das acoes ja praticadas pela empresa, as quais seguem listadas no item 4 - Mapeamento Inicial.";
 
 const categoryGroupMap: Record<string, string> = {
   "Metas/Demandas/Jornada de Trabalho": "metas",
@@ -996,6 +1016,12 @@ export function buildReportModel(input: {
   const companyName = input.companyName?.trim() || "Empresa avaliada";
   const unitName = input.unitName?.trim() || "Unidade principal";
   const summary = input.analytics.summary;
+  const actionPlan = buildActionPlanModel(
+    input.analytics.categories,
+    input.analytics.questions,
+    input.analytics.recommendations,
+    unitName
+  );
   const categoryLines = input.analytics.categories
     .slice(0, 5)
     .map(
@@ -1014,24 +1040,23 @@ export function buildReportModel(input: {
       (department) =>
         `${department.department}: media final ${department.finalAverage.toFixed(2)} com classificacao ${department.finalClassification}.`
     );
-  const recommendationLines = input.analytics.recommendations
-    .map((recommendation) => {
-      const question = getRecommendationQuestion(recommendation);
-      const sectors = getRecommendationSectors(recommendation, unitName);
-      const deadline = getRecommendationDeadline(recommendation);
+  const recommendationLines = actionPlan.groups.flatMap((group) => {
+    if (!group.hasPrioritizedActions) {
+      return [`${group.category}: ${group.summary}`];
+    }
 
-      return (
-        `${question}: ${recommendation.action} ` +
-        `Setores ${sectors.join(", ")}. ` +
-        `Prioridade ${recommendation.priority}. Prazo ${deadline}.`
-      );
-    });
+    return group.rows.map(
+      (row) =>
+        `${group.category} - ${row.pergunta}: ${row.acao} ` +
+        `Setores ${row.setores_contexto}. ` +
+        `Prioridade ${row.prioridade}. Prazo ${row.prazo}.`
+    );
+  });
   const controlMeasures =
     summary.activeMeasures.length > 0
       ? summary.activeMeasures
       : ["Nenhuma medida de controle relevante foi registrada nesta avaliacao."];
   const controlMeasuresTable = buildControlMeasureRows(input.controlMeasures);
-  const actionPlanTable = buildActionPlanRows(input.analytics.recommendations, unitName);
   const departmentSummaryTable = buildDepartmentSummaryRows(input.analytics.departments);
   const topQuestionsTable = buildTopQuestionRows(input.analytics.questions);
 
@@ -1063,7 +1088,9 @@ export function buildReportModel(input: {
     controlMeasuresTable,
     departmentSummaryTable,
     topQuestionsTable,
-    actionPlanTable,
+    actionPlanGroups: actionPlan.groups,
+    actionPlanSummary: actionPlan.summary,
+    actionPlanTable: actionPlan.rows,
     sections: [
       {
         title: "Resumo Executivo",
@@ -1156,6 +1183,20 @@ function getRecommendationDeadline(recommendation: Recommendation): string {
   return recommendation.deadline || docxActionDeadlines[recommendation.priority] || "90 dias";
 }
 
+function getActionPlanCategoryOrder(categories: CategoryMetrics[]): string[] {
+  return categories
+    .map((category) => category.category)
+    .sort((left, right) => {
+      const leftIndex = OFFICIAL_CATEGORIES.indexOf(left as OfficialCategory);
+      const rightIndex = OFFICIAL_CATEGORIES.indexOf(right as OfficialCategory);
+      const safeLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+      const safeRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+
+      if (safeLeft !== safeRight) return safeLeft - safeRight;
+      return left.localeCompare(right, "pt-BR");
+    });
+}
+
 const docxImageKeys = [
   "grafico_global_distribuicao",
   "grafico_global_resumo_riscos",
@@ -1241,29 +1282,120 @@ function getControlMeasureGroups(key: keyof ControlMeasures, item?: ControlMeasu
   return docxMeasureFallbackGroups[key] ?? "";
 }
 
-function buildActionPlanRows(
+function buildActionPlanModel(
+  categories: CategoryMetrics[],
+  questions: QuestionMetrics[],
   recommendations: Recommendation[],
   unitName: string
-): DocxTableRow[] {
-  return recommendations.map((recommendation, index) => {
-    const question = getRecommendationQuestion(recommendation);
-    const sectors = getRecommendationSectors(recommendation, unitName);
-    const classification = getRecommendationClassification(recommendation);
-    const deadline = getRecommendationDeadline(recommendation);
+): { groups: ActionPlanGroup[]; rows: DocxTableRow[]; summary: ActionPlanSummary } {
+  const recommendationMap = new Map<string, Recommendation>();
+  recommendations.forEach((recommendation) => {
+    recommendationMap.set(`${recommendation.category}::${getRecommendationQuestion(recommendation)}`, recommendation);
+  });
+
+  const questionsByCategory = new Map<string, QuestionMetrics[]>();
+  questions.forEach((question) => {
+    const current = questionsByCategory.get(question.category) ?? [];
+    current.push(question);
+    questionsByCategory.set(question.category, current);
+  });
+
+  const rows: DocxTableRow[] = [];
+  const groups = getActionPlanCategoryOrder(categories).map((category) => {
+    const categoryQuestions = (questionsByCategory.get(category) ?? []).slice().sort((left, right) => {
+      const classificationOrder =
+        getClassificationRank(right.finalClassification) - getClassificationRank(left.finalClassification);
+      if (classificationOrder !== 0) return classificationOrder;
+
+      if (right.finalAverage !== left.finalAverage) return right.finalAverage - left.finalAverage;
+      return left.question.localeCompare(right.question, "pt-BR");
+    });
+
+    const actionableQuestions = categoryQuestions.filter(
+      (question) => question.finalClassification === "Moderado" || question.finalClassification === "Alto"
+    );
+
+    if (!actionableQuestions.length) {
+      const fallbackRow = {
+        index: String(rows.length + 1),
+        prioridade: "Monitoramento",
+        pergunta: "Sem novas acoes prioritarias para esta categoria.",
+        setores_contexto: unitName,
+        categoria: category,
+        classificacao: "Baixo",
+        acao: LOW_RISK_CATEGORY_ACTION_TEXT,
+        prazo: "Manter rotina atual",
+        situacao: "Monitoramento",
+        responsavel_unidade: unitName,
+        tipo_linha: "continuidade"
+      } satisfies DocxTableRow;
+
+      rows.push(fallbackRow);
+
+      return {
+        category,
+        hasPrioritizedActions: false,
+        summary: LOW_RISK_CATEGORY_ACTION_TEXT,
+        rows: [fallbackRow]
+      } satisfies ActionPlanGroup;
+    }
+
+    const categoryRows = actionableQuestions.map((question) => {
+      const recommendation =
+        recommendationMap.get(`${question.category}::${question.question}`) ??
+        ({
+          id: `fallback-${normalizeSearch(question.category)}-${normalizeSearch(question.question)}`,
+          category: question.category,
+          question: question.question,
+          classification: question.finalClassification,
+          sectors: [unitName],
+          priority: calculatePriority(question.finalClassification, 0, 0),
+          deadline: docxActionDeadlines[calculatePriority(question.finalClassification, 0, 0)] ?? "90 dias",
+          title: question.question,
+          action:
+            recommendationCatalog[question.category]?.action ??
+            "Executar plano de melhoria especifico para o grupo de risco identificado.",
+          rationale: `Acao automatica gerada para ${question.question}.`
+        } satisfies Recommendation);
+      const sectors = getRecommendationSectors(recommendation, unitName);
+      const classification = getRecommendationClassification(recommendation);
+      const deadline = getRecommendationDeadline(recommendation);
+
+      const row = {
+        index: String(rows.length + 1),
+        prioridade: recommendation.priority,
+        pergunta: getRecommendationQuestion(recommendation),
+        setores_contexto: sectors.join(", ") || unitName,
+        categoria: recommendation.category,
+        classificacao: classification,
+        acao: recommendation.action,
+        prazo: deadline,
+        situacao: "Planejada",
+        responsavel_unidade: unitName,
+        tipo_linha: "acao"
+      } satisfies DocxTableRow;
+
+      rows.push(row);
+      return row;
+    });
 
     return {
-      index: String(index + 1),
-      prioridade: recommendation.priority,
-      pergunta: question,
-      setores_contexto: sectors.join(", ") || unitName,
-      categoria: recommendation.category,
-      classificacao: classification,
-      acao: recommendation.action,
-      prazo: deadline,
-      situacao: "Planejada",
-      responsavel_unidade: unitName
-    };
+      category,
+      hasPrioritizedActions: true,
+      summary: `${categoryRows.length} pergunta(s) da categoria exigem plano de acao prioritario.`,
+      rows: categoryRows
+    } satisfies ActionPlanGroup;
   });
+
+  return {
+    groups,
+    rows,
+    summary: {
+      prioritizedActions: rows.filter((row) => row.tipo_linha === "acao").length,
+      continuityCategories: groups.filter((group) => !group.hasPrioritizedActions).length,
+      totalCategories: groups.length
+    }
+  };
 }
 
 function buildDepartmentSummaryRows(departments: DepartmentMetrics[]): DocxTableRow[] {
@@ -1312,6 +1444,10 @@ export function buildDocxTemplatePayload(input: {
   const summary = input.analytics.summary;
   const workforce = input.analytics.workforce;
   const generatedAt = input.analytics.generatedAt || new Date().toISOString();
+  const reportModel = buildReportModel(input);
+  const actionPlanTable = reportModel.actionPlanTable;
+  const actionPlanGroups = reportModel.actionPlanGroups;
+  const actionPlanSummary = reportModel.actionPlanSummary;
   const responseBase = workforce?.eligibleWorkers ?? summary.eligibleWorkers ?? 0;
   const respondentCount = workforce?.respondentWorkers ?? summary.employeeCount;
   const responseRate =
@@ -1346,8 +1482,6 @@ export function buildDocxTemplatePayload(input: {
   const departmentSummaryText = topRiskDepartment
     ? `O departamento com maior exposicao final foi ${topRiskDepartment.department}, com media ${topRiskDepartment.finalAverage.toFixed(2)} e classificacao ${topRiskDepartment.finalClassification}.`
     : "Nao ha departamentos suficientes para comparacao estatistica.";
-
-  const actionPlanTable = buildActionPlanRows(input.analytics.recommendations, unitName);
   const departmentSummaryTable = buildDepartmentSummaryRows(input.analytics.departments);
 
   const measureSource = normalizeControlMeasures(input.controlMeasures);
@@ -1408,6 +1542,18 @@ export function buildDocxTemplatePayload(input: {
       `Ação: ${row.acao} | Prazo: ${row.prazo}`
   );
 
+  const actionPlanNarrativeLines = actionPlanGroups.flatMap((group) => {
+    if (!group.hasPrioritizedActions) {
+      return [`${group.category}: ${group.summary}`];
+    }
+
+    return group.rows.map(
+      (row) =>
+        `${row.index}. [${row.prioridade}] ${row.categoria} | ${row.pergunta} | Setores: ${row.setores_contexto} | ` +
+        `Acao: ${row.acao} | Prazo: ${row.prazo}`
+    );
+  });
+
   const payload: DocxTemplatePayload = {
     empresa: companyName,
     unidade: unitName,
@@ -1433,7 +1579,7 @@ export function buildDocxTemplatePayload(input: {
     faixas_risco_global:
       "Classificacao metodologica: Baixo abaixo de 1,70; Moderado entre 1,70 e 2,36; Alto a partir de 2,37.",
     resumo_riscos_contagens: `Escala de Pontos: ${pLow}% Baixo, ${pMod}% Moderado, ${pHigh}% Alto.`,
-    resumo_riscos_texto: buildReportModel(input).executiveSummary,
+    resumo_riscos_texto: reportModel.executiveSummary,
     atenua_reducao_pct: summary.attenuationPercent.toFixed(1),
     atenua_reducao_max_pct: String(GLOBAL_ATTENUATION_MAX * 100),
     cidf_agravo_pct: summary.cidfPercent.toFixed(1),
@@ -1460,11 +1606,11 @@ export function buildDocxTemplatePayload(input: {
       Array.from(new Set(actionPlanTable.flatMap((row) => String(row.setores_contexto).split(", "))))
         .filter(Boolean)
         .join(", ") || unitName,
-    plano_acao_qtd: String(actionPlanTable.length),
-    plano_acao_resumo: actionPlanTable.length
-      ? `Foram consolidadas ${actionPlanTable.length} ações para perguntas com nível moderado ou alto.`
-      : "Nenhuma ação prioritária foi identificada nesta avaliação.",
-    plano_acao_itens_texto: recommendationLines.join("\n"),
+    plano_acao_qtd: String(actionPlanSummary.prioritizedActions),
+    plano_acao_resumo: actionPlanSummary.prioritizedActions
+      ? `Foram consolidadas ${actionPlanSummary.prioritizedActions} ações prioritárias distribuídas em ${actionPlanSummary.totalCategories - actionPlanSummary.continuityCategories} categoria(s). ${actionPlanSummary.continuityCategories ? `${actionPlanSummary.continuityCategories} categoria(s) permaneceram somente com recomendação de continuidade das práticas vigentes.` : "Todas as categorias apresentaram pelo menos uma ação prioritária."}`
+      : "Nenhuma ação prioritária foi identificada; todas as categorias permaneceram em continuidade monitorada.",
+    plano_acao_itens_texto: actionPlanNarrativeLines.join("\n"),
     plano_acao_tabela: actionPlanTable,
     plano_acao_quadro1_tabela: actionPlanTable.slice(0, 15),
     plano_acao_quadro2_tabela: actionPlanTable.slice(15),

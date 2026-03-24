@@ -285,6 +285,51 @@ th {
   gap: 0.75rem;
 }
 
+.action-plan-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.action-plan-group {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(16, 32, 51, 0.08);
+  background: rgba(245, 248, 252, 0.9);
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.action-plan-group.is-continuity {
+  background: linear-gradient(180deg, rgba(245, 248, 252, 0.92), rgba(236, 243, 249, 0.96));
+}
+
+.action-plan-group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.action-plan-group-header > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.action-plan-group-header small,
+.action-plan-group-fallback {
+  color: #4c5f79;
+}
+
+.action-plan-group-fallback {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.action-plan-group-cards {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .assessment-grid,
 .measure-grid {
   display: grid;
@@ -1330,6 +1375,14 @@ th {
 }
 
 .report-recommendations {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-action-plan-groups {
+  gap: 1.2rem;
+}
+
+.report-action-plan-groups .action-plan-group-cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -2430,6 +2483,10 @@ button:hover:not(:disabled) {
   .report-recommendations {
     grid-template-columns: 1fr 1fr;
   }
+
+  .report-action-plan-groups .action-plan-group-cards {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -2503,6 +2560,10 @@ button:hover:not(:disabled) {
   .report-kpis,
   .report-grid,
   .report-recommendations {
+    grid-template-columns: 1fr;
+  }
+
+  .report-action-plan-groups .action-plan-group-cards {
     grid-template-columns: 1fr;
   }
 

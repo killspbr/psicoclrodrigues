@@ -171,3 +171,62 @@ test("ReportModel expõe tabelas estruturadas para relatório web e PDF", () => 
   assert.ok(report.actionPlanTable.length > 0);
   assert.ok(report.actionPlanTable.every((row) => row.pergunta && row.setores_contexto && row.acao && row.prioridade && row.prazo));
 });
+
+test("Plano de acao agrupa por categoria e aplica continuidade quando so ha risco baixo", () => {
+  const rows = buildRows((index) => (index < 7 ? "Parcialmente" : "Sim"));
+  const controlMeasures = normalizeControlMeasures();
+
+  const analytics = analyzeRows(rows, controlMeasures, {
+    eligibleWorkers: 2,
+    respondentWorkers: 2,
+    byUnit: {
+      matriz: {
+        eligible: 2,
+        respondents: 2
+      }
+    }
+  });
+
+  const report = buildReportModel({
+    assessmentName: "Ciclo Continuidade",
+    companyName: "Empresa Teste",
+    unitName: "Matriz",
+    analytics,
+    controlMeasures
+  });
+
+  assert.equal(report.actionPlanGroups.length, OFFICIAL_CATEGORIES.length);
+  assert.equal(report.actionPlanSummary.prioritizedActions, 7);
+  assert.equal(report.actionPlanSummary.continuityCategories, 4);
+
+  const firstCategoryGroup = report.actionPlanGroups.find((group) => group.category === OFFICIAL_CATEGORIES[0]);
+  assert.ok(firstCategoryGroup);
+  assert.equal(firstCategoryGroup.hasPrioritizedActions, true);
+  assert.equal(firstCategoryGroup.rows.length, 7);
+
+  const continuityGroups = report.actionPlanGroups.filter((group) => group.category !== OFFICIAL_CATEGORIES[0]);
+  assert.equal(continuityGroups.length, 4);
+  assert.ok(continuityGroups.every((group) => group.hasPrioritizedActions === false));
+  assert.ok(
+    continuityGroups.every((group) =>
+      String(group.rows[0].acao).includes("nao foram identificadas demandas de implementacoes de novos controles")
+    )
+  );
+
+  const payload = buildDocxTemplatePayload({
+    assessmentName: "Ciclo Continuidade",
+    companyName: "Empresa Teste",
+    unitName: "Matriz",
+    analytics,
+    controlMeasures
+  });
+
+  assert.equal(payload.plano_acao_qtd, "7");
+  assert.ok(Array.isArray(payload.plano_acao_tabela));
+  assert.equal(payload.plano_acao_tabela.length, 11);
+  assert.ok(
+    String(payload.plano_acao_resumo).includes(
+      "4 categoria(s) permaneceram somente com recomendação de continuidade"
+    )
+  );
+});
