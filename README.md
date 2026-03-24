@@ -27,6 +27,19 @@ npm run dev:api
 npm run dev:web
 ```
 
+## Publicar no Cloudflare Pages
+
+Para publicar apenas o frontend estatico no Cloudflare Pages, use:
+
+- Build command: `npm run build:pages`
+- Build output directory: `apps/web/dist`
+- Root directory: `/`
+
+Observacao:
+
+- O frontend depende de `VITE_API_URL` apontando para uma API publicada. Sem isso, a interface sobe, mas nao consegue carregar as avaliacoes.
+- O Cloudflare Pages deve compilar a branch `main` mais recente. Se o log mostrar o commit `aa43a0a`, ele esta usando uma revisao antiga.
+
 ## Escopo migrado nesta base
 
 - importacao de `csv`, `xls` e `xlsx`

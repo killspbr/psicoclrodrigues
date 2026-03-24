@@ -877,7 +877,7 @@ export function analyzeRows(rows: InternalRow[], controlMeasures?: ControlMeasur
         motivators: protection.motivators
       } satisfies CategoryMetrics;
     })
-    .sort((left, right) => right.finalAverage - left.finalAverage);
+    .sort((left, right) => right.attenuatedAverage - left.attenuatedAverage);
 
   const questions = Array.from(questionMap.values())
     .map((question) => {
@@ -895,7 +895,7 @@ export function analyzeRows(rows: InternalRow[], controlMeasures?: ControlMeasur
         riskScore: ((rawAverageQuestion - 1) / 2) * 100
       } satisfies QuestionMetrics;
     })
-    .sort((left, right) => right.rawAverage - left.rawAverage);
+    .sort((left, right) => right.finalAverage - left.finalAverage);
 
   const questionSectors = Array.from(questionSectorMap.values())
     .map((item) => {
