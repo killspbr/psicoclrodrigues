@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestão de Placeholders - PsicoRisk Manager</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="assets/js/placeholders-config.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .navbar-prm {
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+    }
+
+    .card-glass {
+      background: #ffffff;
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .main-shell {
+      width: 90vw;
+      max-width: 1200px;
+      margin: 2rem auto;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    .placeholder-badge {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.4rem;
+    }
+
+    .preview-json {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .form-switch .form-check-input {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar superior -->
+  <nav class="navbar navbar-prm">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="logo.png" alt="PsicoRisk Manager" style="height: 50px; width: auto; object-fit: contain;" />
+        <span class="navbar-brand mb-0 h1">PsicoRisk Manager</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="dashboard.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Dashboard</a>
+        <a href="analise-perguntas.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Perguntas</a>
+        <a href="analise-departamentos.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Departamentos</a>
+        <a href="relatorio.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Relatório</a>
+        <a href="plano-acao.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Plano de ação</a>
+        <a href="medidas-controle.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Controle</a>
+        <a href="placeholders.html"
+          class="nav-link px-2 fw-semibold text-success-emphasis d-none d-sm-inline">Placeholders</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-shell">
+    <header class="mb-4 d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h3 mb-1">Gestão de Placeholders</h1>
+        <p class="text-secondary small mb-0">Gerencie os campos dinâmicos utilizados na geração do relatório DOCX.</p>
+      </div>
+      <div>
+        <button id="btnReset" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-counterclockwise"></i> Resetar Padrão
+        </button>
+      </div>
+    </header>
+
+    <div class="row g-4">
+      <!-- Filtros e Busca -->
+      <div class="col-12">
+        <div class="card-glass p-3">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <input type="text" id="searchInput" class="form-control form-control-sm"
+                placeholder="Buscar placeholder por nome ou descrição...">
+            </div>
+            <div class="col-12 col-md-3">
+              <select id="sourceFilter" class="form-select form-select-sm">
+                <option value="all">Todas as Origens</option>
+                <option value="empresa">Empresa</option>
+                <option value="dashboard">Dashboard</option>
+                <option value="relatório">Relatório</option>
+                <option value="plano de ação">Plano de Ação</option>
+                <option value="medidas de controle">Medidas de Controle</option>
+                <option value="cálculo automático">Cálculo Automático</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-3">
+              <select id="statusFilter" class="form-select form-select-sm">
+                <option value="all">Todos os Status</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Placeholders -->
+      <div class="col-12">
+        <div class="card-glass table-container">
+          <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4" width="220">Placeholder</th>
+                <th>Descrição</th>
+                <th width="150">Origem</th>
+                <th width="150">Tipo</th>
+                <th class="text-center" width="120">Relatório</th>
+              </tr>
+            </thead>
+            <tbody id="placeholderTableBody">
+              <!-- JS renderiza aqui -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Preview JSON -->
+      <div class="col-12">
+        <div class="card-glass p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Preview do Payload (JSON)</h2>
+            <span class="badge bg-primary rounded-pill" id="activeCount">0 ativos</span>
+          </div>
+          <p class="small text-secondary mb-3">Este JSON representa os dados reais disponíveis que serão enviados para o
+            gerador de DOCX, filtrados pelas suas configurações acima.</p>
+          <pre id="jsonPreview" class="preview-json mb-0"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'psicorisk_placeholders_config_v1';
+    let userConfig = {};
+
+    function loadPlaceholderConfig() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          userConfig = JSON.parse(saved);
+        } catch (e) { console.error('Erro ao ler config', e); }
+      }
+
+      // Mesclar com catálogo padrão (garantir que novos campos do catálogo apareçam)
+      window.PLACEHOLDER_CATALOG.forEach(p => {
+        if (userConfig[p.key] === undefined) {
+          userConfig[p.key] = p.enabledByDefault;
+        }
+      });
+      savePlaceholderConfig();
+    }
+
+    function savePlaceholderConfig() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userConfig));
+      render();
+    }
+
+    function togglePlaceholder(key) {
+      userConfig[key] = !userConfig[key];
+      savePlaceholderConfig();
+    }
+
+    function resetConfig() {
+      if (confirm('Deseja resetar para as configurações padrão?')) {
+        userConfig = {};
+        window.PLACEHOLDER_CATALOG.forEach(p => {
+          userConfig[p.key] = p.enabledByDefault;
+        });
+        savePlaceholderConfig();
+      }
+    }
+
+    function getActualValues() {
+      // Tentar ler dados reais do sistema para o preview
+      const empresa = JSON.parse(localStorage.getItem('psicossocial_empresa_v1') || '{}');
+      const plano = JSON.parse(localStorage.getItem('psicossocial_plano_acao_v2') || '{}');
+      const selectedUnit = localStorage.getItem('psicossocial_selected_unit_v1') || 'Geral';
+
+      // Mock/Valores calculados dinâmicos baseados no estado atual
+      // No relatório real, esses valores são injetados pela engine.
+      return {
+        empresa: empresa.name || 'Empresa Exemplo',
+        unidade: selectedUnit,
+        data_relatorio: new Date().toLocaleDateString('pt-BR'),
+        responsavel_unidade: plano.responsavel_unidade || plano.unitResponsible || '-',
+        taxa_resposta: '85,4%',
+        total_respondentes: 142,
+        pontos_geral: '53,2 pontos (escala 27–81)',
+        pontos_geral_atenuado: '48,1 pontos (escala 27–81)',
+        classif_global_bruto: 'Moderado',
+        classif_global_final: 'Moderado',
+        resumo_riscos_texto: 'O ambiente apresenta riscos moderados que requerem atenção...',
+        resumo_riscos_contagens: '2 Alto, 12 Moderado, 13 Baixo',
+        plano_acao_resumo: '15 ações (3 Críticas, 7 Altas)',
+        cipa_situacao: 'Ativa',
+        cipa_grupos: 'Todos',
+        aet_aep_situacao: 'Ativa',
+        aet_aep_grupos: 'Ergonomia',
+        cidf_situacao: 'Sem Agravamento',
+        cidf_grupos: 'N/A',
+        grafico_global_resumo_riscos: '[IMAGEM GERADA]',
+        grafico_global_distribuicao: '[IMAGEM GERADA]',
+        // ... outros placeholders seguem a mesma lógica
+      };
+    }
+
+    function render() {
+      const tbody = document.getElementById('placeholderTableBody');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const source = document.getElementById('sourceFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      const filtered = window.PLACEHOLDER_CATALOG.filter(p => {
+        const matchSearch = p.key.toLowerCase().includes(search) || p.description.toLowerCase().includes(search) || p.label.toLowerCase().includes(search);
+        const matchSource = source === 'all' || p.source === source;
+        const matchStatus = status === 'all' || (status === 'active' ? userConfig[p.key] : !userConfig[p.key]);
+        return matchSearch && matchSource && matchStatus;
+      });
+
+      tbody.innerHTML = filtered.map(p => `
+        <tr class="${userConfig[p.key] ? '' : 'opacity-50'}">
+          <td class="ps-4">
+            <span class="placeholder-badge">{{${p.key}}}</span>
+            <div class="mt-1 small fw-medium">${p.label}</div>
+          </td>
+          <td class="small text-secondary">${p.description}</td>
+          <td><span class="badge bg-light text-dark border fw-normal">${p.source}</span></td>
+          <td><span class="badge bg-light text-dark border fw-normal">${p.type}</span></td>
+          <td class="text-center">
+            <div class="form-check form-switch d-inline-block">
+              <input class="form-check-input" type="checkbox" ${userConfig[p.key] ? 'checked' : ''} onchange="togglePlaceholder('${p.key}')">
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // Preview JSON
+      const actualValues = getActualValues();
+      const activePayload = {};
+      let activeCount = 0;
+
+      window.PLACEHOLDER_CATALOG.forEach(p => {
+        if (userConfig[p.key]) {
+          activePayload[p.key] = actualValues[p.key] || `{{${p.key}}}`;
+          activeCount++;
+        }
+      });
+
+      document.getElementById('activeCount').textContent = `${activeCount} ativos`;
+      document.getElementById('jsonPreview').textContent = JSON.stringify(activePayload, null, 2);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('sourceFilter').addEventListener('change', render);
+    document.getElementById('statusFilter').addEventListener('change', render);
+    document.getElementById('btnReset').addEventListener('click', resetConfig);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPlaceholderConfig();
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+# Arquivos temporários do SO
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs e temporários
+*.log
+tmp/
+*.tmp
+node_modules/
+dist/
+build/
+.vite/
+__model_inspect/
+apps/web/src/*.js
+apps/web/src/*.d.ts
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
+
+# Ferramentas/automação internas
+.agent/
+
+# Arquivos/pastas grandes ou sensíveis
+00 - APRESENTAÇÕES/
+01 - MODELOS/
+03 - PLANO DE AÇÃO SAÚDE/
+98 - BKP/
+99 - OBSOLETO/
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.zip
+!apps/web/public/MODELO_RELATORIO_PSICOSSOCIAIS_V2.docx
+
+# Relatórios/exports gerados automaticamente
+analise-*.html
+dashboard.html
+medidas-controle.html
+plano-acao.html
+relatorio.html
+questionario.html

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metodologia - PsicoRisk Manager</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="assets/js/psicorisk-engine.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar-prm {
+      background: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+    }
+
+    .main-shell {
+      width: 90vw;
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 1rem 0 1.5rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-prm">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="logo.png" alt="PsicoRisk Manager" style="height: 50px; width: auto; object-fit: contain;" />
+        <span class="navbar-brand mb-0 h1">PsicoRisk Manager</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="dashboard.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Dashboard</a>
+        <a href="analise-perguntas.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Perguntas</a>
+        <a href="analise-departamentos.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Departamentos</a>
+        <a href="relatorio.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Relatório</a>
+        <a href="plano-acao.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Plano de ação</a>
+        <a href="medidas-controle.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Controle</a>
+        <a href="placeholders.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Placeholders</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-shell mb-5">
+    <section class="card border-0 shadow-sm p-4 p-md-5 mb-4" style="background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);">
+      <header class="mb-4 pb-3 border-bottom">
+        <h1 class="h3 mb-2 text-primary">Metodologia da avaliação psicossocial</h1>
+        <p class="text-secondary mb-0">
+          Esta página descreve, em linguagem acessível, a base conceitual, o questionário utilizado, o cálculo de risco
+          psicossocial e a forma como as medidas de controle atenuam os resultados no PsicoRisk Manager.
+        </p>
+      </header>
+
+      <section class="mb-4 p-3 bg-white rounded-3 border">
+        <h2 class="h5 mb-3 text-primary">1. Visão geral</h2>
+        <p class="small text-secondary mb-2">
+          O PsicoRisk Manager é uma ferramenta para apoio à gestão de riscos psicossociais no trabalho. A partir das
+          respostas de trabalhadores a um questionário estruturado, a plataforma consolida indicadores por categoria de
+          risco, pergunta e departamento, auxiliando a priorização de ações de promoção de saúde mental e qualidade de
+          vida no trabalho.
+        </p>
+        <p class="small text-secondary mb-0">
+          A metodologia combina conceitos da literatura de riscos psicossociais, instrumentos consolidados de avaliação
+          e práticas de gestão em saúde e segurança do trabalho.
+        </p>
+      </section>
+
+      <section class="mb-4 p-3 bg-white rounded-3 border">
+        <h2 class="h5 mb-3 text-primary">2. Questionário e base conceitual</h2>
+        <p class="small text-secondary mb-2">
+          O questionário utilizado nesta ferramenta foi construído com base em referências amplamente utilizadas na
+          avaliação de riscos psicossociais, combinando instrumentos nacionais e internacionais. A estrutura final do
+          questionário deriva de uma síntese adaptada dos seguintes materiais:
+        </p>
+        <ul class="small text-secondary mb-2">
+          <li>
+            <strong>Formulário CEREST / CVSAT</strong> – Disponível em:
+            <a href="https://goias.gov.br/saude/wp-content/uploads/sites/34/2016/09/Questionario-de-riscos-psicossociais-no-trabalho-2023-a98.pdf" target="_blank" rel="noopener noreferrer">
+              https://goias.gov.br/saude/wp-content/uploads/sites/34/2016/09/Questionario-de-riscos-psicossociais-no-trabalho-2023-a98.pdf
+            </a>
+          </li>
+          <li>
+            <strong>COPSOQ (Copenhagen Psychosocial Questionnaire)</strong> – Disponível em:
+            <a href="https://www.copsoq-network.org/assets/Uploads/COPSOQ-Manual-Portugal2013.pdf" target="_blank" rel="noopener noreferrer">
+              https://www.copsoq-network.org/assets/Uploads/COPSOQ-Manual-Portugal2013.pdf
+            </a>
+          </li>
+          <li>
+            <strong>Questionário de Bem-Estar no Trabalho – UWES</strong> – Disponível em:
+            <a href="https://www.wilmarschaufeli.nl/publications/Schaufeli/Tests/UWES_BRA_17.pdf" target="_blank" rel="noopener noreferrer">
+              https://www.wilmarschaufeli.nl/publications/Schaufeli/Tests/UWES_BRA_17.pdf
+            </a>
+          </li>
+          <li>
+            <strong>SQG-12 – Questionário de Saúde Geral</strong> – Disponível em:
+            <a href="https://pepsic.bvsalud.org/pdf/avp/v1n1/v1n1a03.pdf" target="_blank" rel="noopener noreferrer">
+              https://pepsic.bvsalud.org/pdf/avp/v1n1/v1n1a03.pdf
+            </a>
+          </li>
+        </ul>
+        <p class="small text-secondary mb-0">
+          As perguntas foram reorganizadas e adaptadas para linguagem simples, mantendo a essência dos construtos
+          avaliados em cada instrumento. A combinação dessas quatro referências permite uma avaliação abrangente,
+          contemplando riscos psicossociais organizacionais, bem-estar, saúde mental percebida e fatores pessoais e
+          contextuais.
+        </p>
+      </section>
+
+      <section class="mb-4 p-3 bg-white rounded-3 border">
+        <h2 class="h5 mb-3 text-primary">3. Escala de resposta e pontuação</h2>
+        <p class="small text-secondary mb-2">
+          Cada afirmação do questionário é respondida em uma escala de três pontos:
+        </p>
+        <ul class="small text-secondary mb-2">
+          <li><strong>Sim</strong> – condição favorável, indicando boa percepção em relação àquele aspecto.</li>
+          <li><strong>Parcialmente</strong> – condição intermediária ou inconsistente.</li>
+          <li><strong>Não</strong> – condição desfavorável, sugerindo presença de fator de risco psicossocial.</li>
+        </ul>
+        <p class="small text-secondary mb-0">
+          Para fins de análise quantitativa, as respostas são convertidas em pontos, da seguinte forma: Sim = 1 ponto,
+          Parcialmente = 2 pontos e Não = 3 pontos. Quanto maior a pontuação, maior a indicação de risco psicossocial
+          naquela dimensão.
+        </p>
+      </section>
+
+        <h2 class="h5 mb-3 text-primary">4. Cálculo do risco por categoria e global (Escore Médio)</h2>
+        <p class="small text-secondary mb-2">
+          Cada pergunta pertence a uma categoria temática. O sistema calcula a 
+          <strong>pontuação média por trabalhador</strong> (Escore Médio), que varia de 1.0 (todas as respostas favoráveis) 
+          a 3.0 (todas as respostas desfavoráveis).
+        </p>
+        <p class="small text-secondary mb-2">
+          De forma análoga, o <strong>score global</strong> resulta da média das 27 perguntas por trabalhador. 
+          As faixas de classificação utilizadas em todo o sistema são:
+        </p>
+        <ul class="small text-secondary mb-2">
+          <li><strong>Baixo Risco:</strong> Escore Médio inferior a 1.70.</li>
+          <li><strong>Moderado Risco:</strong> Escore Médio entre 1.70 e 2.36.</li>
+          <li><strong>Alto Risco:</strong> Escore Médio igual ou superior a 2.37.</li>
+        </ul>
+        <p class="small text-secondary mb-0">
+          Esses resultados são denominados <strong>resultados brutos</strong>, pois representam a percepção dos
+          trabalhadores sem considerar, ainda, as medidas de controle e práticas de gestão já existentes na empresa.
+        </p>
+      </section>
+
+      <section class="mb-4 p-3 bg-white rounded-3 border">
+        <h2 class="h5 mb-3 text-primary">5. Medidas de controle e atenuação de risco</h2>
+        <p class="small text-secondary mb-2">
+          Além do questionário, a ferramenta permite registrar, em uma tela específica, as <strong>medidas de
+          controle</strong> já existentes na organização, tais como CIPA atuante, análises ergonômicas (AET/AEP),
+          canais éticos/de denúncia, programas de saúde mental, treinamentos de lideranças e pesquisas de clima.
+        </p>
+        <p class="small text-secondary mb-2">
+          Para cada medida, o avaliador informa: (a) se a empresa a possui (Sim/Não), (b) um <strong>peso</strong> de
+          importância de 0 a 10 e (c) em quais <strong>grupos de perguntas</strong> essa medida atua. Os grupos
+          atualmente utilizados são: Metas/Demandas (metas), Posto de Trabalho (posto), Percepção das Atividades
+          (percepcao), Relações/Suporte (relacoes) e Fatores Pessoais/Familiares (fatores). Uma mesma medida pode
+          atuar em vários grupos, de acordo com a realidade da empresa.
+        </p>
+        <p class="small text-secondary mb-2">
+          A partir dessas informações, o sistema calcula um <strong>fator de proteção global</strong> e um
+          <strong>fator de proteção por categoria</strong>. Em termos simplificados, cada medida contribui com um
+          impacto proporcional ao seu peso normalizado (peso/10) e a um peso-base definido para o tipo de medida
+          (por exemplo, programas de saúde mental têm maior peso em fatores pessoais/familiares). A soma desses
+          impactos gera um fator de proteção máximo igual a 1, limitado por faixas de contribuição.
+        </p>
+        <p class="small text-secondary mb-2">
+          O <strong>score global atenuado</strong> é obtido aplicando-se esse fator de proteção sobre o score bruto
+          médio por trabalhador, por meio de um parâmetro de intensidade (K), atualmente limitado a uma redução máxima
+          de aproximadamente 20% do risco global. De forma análoga, cada categoria tem seu score atenuado de acordo com
+          as medidas marcadas para o grupo de perguntas correspondente.
+        </p>
+        <p class="small text-secondary mb-2">
+          O sistema também permite registrar a presença de <strong>afastamentos por CID F</strong> nos últimos 12 meses.
+          Quando presente, esse indicador é tratado como um <strong>agravante global</strong> na análise, sendo
+          considerado qualitativamente nas telas de acompanhamento e na interpretação dos resultados.
+        </p>
+        <p class="small text-secondary mb-0">
+          Nas telas de Dashboard, Análise por Perguntas e Análise por Departamentos, bem como no relatório, o usuário
+          pode comparar, lado a lado, <strong>resultados brutos</strong> e <strong>resultados atenuados</strong>. Um
+          controle tipo "liga/desliga" (toggle) permite ativar ou desativar a aplicação da atenuação, facilitando a
+          compreensão de quanto as medidas de controle estão reduzindo o risco em cada visão de análise.
+        </p>
+      </section>
+
+      <section class="mb-2 p-3 bg-light rounded-3 border border-warning">
+        <h2 class="h5 mb-3 text-warning-emphasis">7. Recomendações de uso e limitações</h2>
+        <p class="small text-secondary mb-2">
+          A avaliação psicossocial realizada por esta ferramenta tem caráter indicativo e não substitui avaliações
+          clínicas individuais ou diagnósticos médicos. Os resultados devem ser interpretados em conjunto com outras
+          fontes de informação, como entrevistas, indicadores de saúde, absenteísmo, relatos qualitativos e dados
+          organizacionais.
+        </p>
+        <p class="small text-secondary mb-0">
+          O objetivo principal é apoiar a gestão na identificação de tendências, priorização de áreas e temas críticos
+          e registro estruturado de medidas de controle e planos de ação voltados à promoção da saúde mental no
+          trabalho. O detalhamento técnico da priorização das ações está disponível integralmente no Relatório de Avaliação.
+        </p>
+      </section>
+    </section>
+  </main>
+
+  <footer class="text-center">
+    <div class="container small">
+      PsicoRisk Manager &mdash; Metodologia de avaliação de riscos psicossociais documentada nesta página.
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

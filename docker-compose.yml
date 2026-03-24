@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: psicorisk-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: psicorisk
+      POSTGRES_USER: psicorisk
+      POSTGRES_PASSWORD: psicorisk
+    ports:
+      - "5432:5432"
+    volumes:
+      - psicorisk-db-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: psicorisk-api
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://psicorisk:psicorisk@db:5432/psicorisk
+      CORS_ORIGIN: http://localhost:4173,http://127.0.0.1:4173
+    depends_on:
+      - db
+    ports:
+      - "8081:8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8081
+    container_name: psicorisk-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "4173:4173"
+
+volumes:
+  psicorisk-db-data:

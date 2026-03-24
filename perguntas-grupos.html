@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mapa de Perguntas e Grupos - Avaliação Psicossocial</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar-prm {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(229, 231, 235, 0.7);
+    }
+
+    main {
+      flex: 1;
+      width: 90vw;
+      max-width: 1100px;
+      margin: 1.5rem auto 2rem;
+    }
+
+    .card-glass {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    .small-muted {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .group-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      padding: 0.2rem 0.75rem;
+      font-size: 0.85rem;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #d1fae5;
+    }
+
+    .accordion-button::after {
+      filter: invert(44%);
+    }
+
+    table tbody tr td {
+      vertical-align: middle;
+    }
+
+    code {
+      background: rgba(15, 23, 42, 0.08);
+      border-radius: 0.35rem;
+      padding: 0.05rem 0.5rem;
+      font-size: 0.85rem;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-prm">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <img src="logo.png" alt="PsicoRisk Manager" style="height: 50px; width: auto; object-fit: contain;" />
+        <span class="navbar-brand mb-0 h1">PsicoRisk Manager</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <a href="dashboard.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Dashboard</a>
+        <a href="analise-perguntas.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Perguntas</a>
+        <a href="analise-departamentos.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Departamentos</a>
+        <a href="relatorio.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Relatório</a>
+        <a href="plano-acao.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Plano de ação</a>
+        <a href="medidas-controle.html" class="nav-link px-2 text-secondary d-none d-sm-inline">Medidas de Controle</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="card-glass p-4 p-md-5 mb-4">
+      <header class="mb-4">
+        <h1 class="h4 mb-2">Mapa de Perguntas e Grupos</h1>
+        <p class="small-muted mb-0">
+          Use esta tela para importar o arquivo XLS/XLSX emitido pelo sistema de coleta. O componente lê os textos das
+          perguntas (células L5–AL5) e os respectivos grupos (células L4–AL4), permitindo conferir alterações antes de
+          atualizar o questionário.
+        </p>
+      </header>
+
+      <div class="row g-3 align-items-end mb-3">
+        <div class="col-12 col-md-6">
+          <label for="xlsxInput" class="form-label">Arquivo XLSX/XLS</label>
+          <input
+            type="file"
+            class="form-control"
+            id="xlsxInput"
+            accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          />
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+          <button class="btn btn-primary" id="btnImportQuestions">Importar perguntas</button>
+        </div>
+        <div class="col-12 col-md-3 d-grid">
+          <button class="btn btn-outline-secondary" id="btnLoadCatalog">Carregar último catálogo salvo</button>
+        </div>
+      </div>
+      <div id="statusArea" class="small-muted"></div>
+    </section>
+
+    <section class="card-glass p-4 mb-4" id="catalogSummary" style="display: none;">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+        <div>
+          <div class="text-uppercase small text-secondary fw-semibold mb-2">Origem</div>
+          <p class="mb-1" id="catalogFileName">-</p>
+          <p class="small-muted mb-0" id="catalogTimestamp">-</p>
+        </div>
+        <div class="row g-3 flex-1">
+          <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 text-center">
+              <div class="small text-secondary">Perguntas</div>
+              <div class="h4 mb-0" id="totalQuestions">0</div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 text-center">
+              <div class="small text-secondary">Grupos detectados</div>
+              <div class="h4 mb-0" id="totalGroups">0</div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded-3 p-3">
+              <div class="small text-secondary mb-1">Sequência de colunas</div>
+              <div id="columnRange" class="fw-semibold">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-glass p-4 mb-4" id="groupList" style="display: none;">
+      <h2 class="h5 mb-3">Perguntas por grupo</h2>
+      <div class="accordion" id="groupAccordion"></div>
+    </section>
+
+    <section class="card-glass p-4" id="questionTableSection" style="display: none;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Catálogo (ordem original)</h2>
+        <span class="small text-secondary">Fonte: células L5–AL5</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 5%;">#</th>
+              <th style="width: 10%;">Coluna Excel</th>
+              <th>Pergunta</th>
+              <th style="width: 30%;">Grupo</th>
+            </tr>
+          </thead>
+          <tbody id="questionTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const FIRST_QUESTION_COL_INDEX = 11; // Coluna L (0-based)
+    const QUESTION_CATALOG_STORAGE_KEY = 'psicossocial_question_catalog_v1';
+
+    let selectedFile = null;
+
+    function normalize(value) {
+      if (value == null) return '';
+      if (typeof value === 'number' && Number.isNaN(value)) return '';
+      return String(value).trim();
+    }
+
+    function excelColumnName(indexZeroBased) {
+      let columnNumber = indexZeroBased + 1;
+      let columnName = '';
+      while (columnNumber > 0) {
+        const remainder = (columnNumber - 1) % 26;
+        columnName = String.fromCharCode(65 + remainder) + columnName;
+        columnNumber = Math.floor((columnNumber - 1) / 26);
+      }
+      return columnName;
+    }
+
+    function updateStatus(message, type = 'info') {
+      const area = document.getElementById('statusArea');
+      if (!area) return;
+      const palette = {
+        success: 'text-success',
+        danger: 'text-danger',
+        warning: 'text-warning',
+        info: 'text-secondary'
+      };
+      const cls = palette[type] || palette.info;
+      area.innerHTML = `<span class="${cls}">${message}</span>`;
+    }
+
+    function extractQuestionCatalog(sheetRows) {
+      if (!Array.isArray(sheetRows) || !sheetRows.length) {
+        throw new Error('Planilha vazia ou inválida.');
+      }
+
+      const headerIdx = sheetRows.findIndex(row => {
+        const firstCell = normalize(row && row[0]);
+        return firstCell && firstCell.includes('Código da Empresa');
+      });
+
+      if (headerIdx === -1) {
+        throw new Error('Não foi possível localizar a linha com "Código da Empresa" para referenciar as perguntas.');
+      }
+
+      const groupRow = sheetRows[headerIdx - 1] || [];
+      const questionRow = sheetRows[headerIdx] || [];
+
+      const questions = [];
+      let currentGroup = '';
+      let questionCounter = 0;
+      let firstColumn = null;
+      let lastColumn = null;
+
+      for (let col = FIRST_QUESTION_COL_INDEX; col < questionRow.length; col += 1) {
+        const text = normalize(questionRow[col]);
+        if (!text) continue;
+
+        const rawGroup = normalize(groupRow[col]);
+        if (rawGroup) {
+          currentGroup = rawGroup;
+        }
+
+        const groupName = currentGroup || 'Sem grupo definido';
+        const question = {
+          index: ++questionCounter,
+          text,
+          group: groupName,
+          columnIndex: col,
+          columnLabel: excelColumnName(col)
+        };
+        questions.push(question);
+
+        if (firstColumn == null) firstColumn = question.columnLabel;
+        lastColumn = question.columnLabel;
+      }
+
+      if (!questions.length) {
+        throw new Error('Nenhuma pergunta encontrada entre as colunas L e AL. Verifique se o arquivo segue o layout esperado.');
+      }
+
+      const groupMap = new Map();
+      questions.forEach(q => {
+        if (!groupMap.has(q.group)) {
+          groupMap.set(q.group, { name: q.group, questions: [] });
+        }
+        groupMap.get(q.group).questions.push(q);
+      });
+
+      return {
+        questions,
+        groups: Array.from(groupMap.values()),
+        columnRange: firstColumn && lastColumn ? `${firstColumn} – ${lastColumn}` : '-',
+      };
+    }
+
+    function renderCatalog(catalog, meta = {}) {
+      if (!catalog) return;
+      const summarySection = document.getElementById('catalogSummary');
+      const groupSection = document.getElementById('groupList');
+      const tableSection = document.getElementById('questionTableSection');
+      if (summarySection) summarySection.style.display = 'block';
+      if (groupSection) groupSection.style.display = 'block';
+      if (tableSection) tableSection.style.display = 'block';
+
+      document.getElementById('catalogFileName').textContent = meta.fileName || '-';
+      document.getElementById('catalogTimestamp').textContent = meta.timestamp
+        ? new Date(meta.timestamp).toLocaleString('pt-BR')
+        : '-';
+      document.getElementById('totalQuestions').textContent = catalog.questions.length;
+      document.getElementById('totalGroups').textContent = catalog.groups.length;
+      document.getElementById('columnRange').textContent = catalog.columnRange || '-';
+
+      const accordion = document.getElementById('groupAccordion');
+      if (accordion) {
+        accordion.innerHTML = catalog.groups
+          .map((group, idx) => {
+            const collapseId = `group-collapse-${idx}`;
+            const headingId = `group-heading-${idx}`;
+            const questionList = group.questions
+              .map(q => `<li class="mb-1"><span class="text-secondary small me-1">${q.columnLabel}</span>${q.text}</li>`)
+              .join('');
+
+            return `
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="${headingId}">
+                  <button class="accordion-button ${idx > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                    <span class="me-2 group-pill">${group.questions.length} perguntas</span>
+                    <span>${group.name}</span>
+                  </button>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" data-bs-parent="#groupAccordion">
+                  <div class="accordion-body">
+                    <ol class="mb-0 ps-3 small text-dark">
+                      ${questionList}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      const tableBody = document.getElementById('questionTableBody');
+      if (tableBody) {
+        tableBody.innerHTML = catalog.questions
+          .map(q => `
+            <tr>
+              <td>${q.index}</td>
+              <td><code>${q.columnLabel}</code></td>
+              <td>${q.text}</td>
+              <td>${q.group}</td>
+            </tr>
+          `)
+          .join('');
+      }
+    }
+
+    function saveCatalogToStorage(payload) {
+      try {
+        localStorage.setItem(QUESTION_CATALOG_STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.warn('Não foi possível salvar o catálogo no localStorage', err);
+      }
+    }
+
+    function loadCatalogFromStorage() {
+      try {
+        const raw = localStorage.getItem(QUESTION_CATALOG_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (err) {
+        console.warn('Não foi possível ler o catálogo salvo', err);
+        return null;
+      }
+    }
+
+    function handleFileSelection(evt) {
+      selectedFile = evt.target.files && evt.target.files[0] ? evt.target.files[0] : null;
+    }
+
+    function handleImport() {
+      if (!selectedFile) {
+        updateStatus('Selecione um arquivo primeiro.', 'warning');
+        return;
+      }
+
+      const extension = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (extension !== 'xlsx' && extension !== 'xls') {
+        updateStatus('Formato não suportado. Utilize arquivos XLS ou XLSX.', 'danger');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => updateStatus('Erro ao ler o arquivo.', 'danger');
+      reader.onload = (e) => {
+        try {
+          updateStatus('Processando planilha...', 'info');
+          const arrayBuffer = e.target?.result;
+          if (!arrayBuffer) {
+            throw new Error('Conteúdo não disponível para leitura.');
+          }
+          if (typeof XLSX === 'undefined') {
+            throw new Error('Biblioteca XLSX não carregada.');
+          }
+
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          if (!sheetName) throw new Error('Nenhuma aba encontrada no arquivo XLSX.');
+          const sheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false, defval: null });
+
+          const catalog = extractQuestionCatalog(rows);
+          const payload = {
+            ...catalog,
+            fileName: selectedFile.name,
+            timestamp: Date.now()
+          };
+          renderCatalog(catalog, payload);
+          saveCatalogToStorage(payload);
+          updateStatus('Perguntas carregadas com sucesso!', 'success');
+        } catch (err) {
+          console.error(err);
+          updateStatus(err.message || 'Erro ao processar o arquivo.', 'danger');
+        }
+      };
+
+      reader.readAsArrayBuffer(selectedFile);
+    }
+
+    function handleLoadFromStorage() {
+      const cached = loadCatalogFromStorage();
+      if (!cached) {
+        updateStatus('Nenhum catálogo salvo encontrado.', 'warning');
+        return;
+      }
+      renderCatalog(cached, cached);
+      updateStatus('Catálogo restaurado do cache local.', 'info');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('xlsxInput');
+      if (input) input.addEventListener('change', handleFileSelection);
+
+      const importBtn = document.getElementById('btnImportQuestions');
+      if (importBtn) importBtn.addEventListener('click', handleImport);
+
+      const loadBtn = document.getElementById('btnLoadCatalog');
+      if (loadBtn) loadBtn.addEventListener('click', handleLoadFromStorage);
+
+      // Tenta preencher tela com o último catálogo salvo
+      const cached = loadCatalogFromStorage();
+      if (cached && cached.questions && cached.questions.length) {
+        renderCatalog(cached, cached);
+        updateStatus('Catálogo carregado automaticamente do cache. Importe um arquivo para atualizar.', 'info');
+      }
+    });
+  </script>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "@psicorisk/api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:check": "node -e \"console.log(process.env.DATABASE_URL || 'DATABASE_URL nao definido')\""
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/multipart": "^9.2.1",
+    "@psicorisk/domain": "*",
+    "fastify": "^5.6.1",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.6"
+  }
+}

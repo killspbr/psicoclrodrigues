@@ -1,0 +1,22 @@
+{
+  "name": "psicorisk-manager-platform",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:domain": "npm run build --workspace @psicorisk/domain",
+    "build:api": "npm run build --workspace @psicorisk/api",
+    "build:web": "npm run build --workspace @psicorisk/web",
+    "build": "npm run build:domain && npm run build:api && npm run build:web",
+    "test": "npm run build:domain && npm run test --workspace @psicorisk/domain",
+    "typecheck": "npm run build:domain && npm run typecheck --workspace @psicorisk/api && npm run typecheck --workspace @psicorisk/web",
+    "dev:api": "npm run build:domain && npm run dev --workspace @psicorisk/api",
+    "dev:web": "npm run build:domain && npm run dev --workspace @psicorisk/web"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
