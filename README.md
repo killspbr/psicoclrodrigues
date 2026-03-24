@@ -40,6 +40,34 @@ Observacao:
 - O frontend depende de `VITE_API_URL` apontando para uma API publicada. Sem isso, a interface sobe, mas nao consegue carregar as avaliacoes.
 - O Cloudflare Pages deve compilar a branch `main` mais recente. Se o log mostrar o commit `aa43a0a`, ele esta usando uma revisao antiga.
 
+## Publicar a API no Cloudflare Workers
+
+O repositorio contem um Worker dedicado em `apps/api-worker`, separado da API Fastify local.
+
+Passos:
+
+```bash
+npm install
+npm run build:domain
+npm run typecheck:api-worker
+npm run deploy:api-worker
+```
+
+No Cloudflare Workers, configure:
+
+- `DATABASE_URL`: string de conexao do PostgreSQL
+- opcionalmente `CORS_ORIGIN`: dominio do frontend publicado
+
+Opcao recomendada:
+
+- usar Hyperdrive e expor a string pelo binding `HYPERDRIVE.connectionString`
+
+Depois do deploy do Worker:
+
+- copie a URL publicada da API
+- configure `VITE_API_URL` no Cloudflare Pages com essa URL
+- nao inclua `/api` no final
+
 ## Escopo migrado nesta base
 
 - importacao de `csv`, `xls` e `xlsx`

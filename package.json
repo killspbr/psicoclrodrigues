@@ -12,10 +12,13 @@
     "build:web": "npm run build:domain && npm run build --workspace @psicorisk/web",
     "build:pages": "npm run build:web",
     "build": "npm run build:domain && npm run build:api && npm run build:web",
+    "typecheck:api-worker": "npm run typecheck --workspace @psicorisk/api-worker",
     "test": "npm run build:domain && npm run test --workspace @psicorisk/domain",
     "typecheck": "npm run build:domain && npm run typecheck --workspace @psicorisk/api && npm run typecheck --workspace @psicorisk/web",
     "dev:api": "npm run build:domain && npm run dev --workspace @psicorisk/api",
-    "dev:web": "npm run build:domain && npm run dev --workspace @psicorisk/web"
+    "dev:web": "npm run build:domain && npm run dev --workspace @psicorisk/web",
+    "dev:api-worker": "npm run build:domain && npm run dev --workspace @psicorisk/api-worker",
+    "deploy:api-worker": "npm run build:domain && npm run deploy --workspace @psicorisk/api-worker"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
